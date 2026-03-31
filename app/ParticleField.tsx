@@ -85,22 +85,15 @@ function Particles() {
     particlesRef.current.rotation.y = time * 0.05
   })
 
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geo.setAttribute('scale', new THREE.BufferAttribute(scales, 1))
+    return geo
+  }, [positions, scales])
+
   return (
-    <points ref={particlesRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={particlesCount}
-          array={positions}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-scale"
-          count={particlesCount}
-          array={scales}
-          itemSize={1}
-        />
-      </bufferGeometry>
+    <points ref={particlesRef} geometry={geometry}>
       <pointsMaterial
         size={0.15}
         color="#4fd1ff"
