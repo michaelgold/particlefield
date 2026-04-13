@@ -55,6 +55,10 @@ export default function ParticleFieldVanilla() {
       // CRITICAL: Add layoutsubtree attribute BEFORE appending
       renderer.domElement.setAttribute('layoutsubtree', '');
       
+      // Set FLIP_Y for HTML textures
+      const gl = renderer.getContext() as WebGLRenderingContext;
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      
       containerRef.current!.appendChild(renderer.domElement);
 
       // Create HTML renderer and connect AFTER canvas is in DOM
@@ -91,12 +95,14 @@ export default function ParticleFieldVanilla() {
       htmlDiv = document.createElement('div');
       htmlDiv.style.cssText = `
         width: 300px;
+        height: 200px;
         padding: 20px;
         background: rgba(0, 0, 0, 0.8);
         border: 2px solid #4488ff;
         border-radius: 10px;
         color: white;
         font-family: system-ui;
+        box-sizing: border-box;
       `;
       htmlDiv.innerHTML = `
         <h2 style="margin: 0 0 10px 0; color: #4488ff;">HTML in Canvas! 🎉</h2>
@@ -146,12 +152,15 @@ export default function ParticleFieldVanilla() {
       });
       const plane = new THREE.Mesh(planeGeometry, planeMaterial);
       
-      // Flip the plane 180 degrees on X-axis to correct upside-down rendering
-      plane.rotation.x = Math.PI;
+      // Don't rotate the plane - flip the HTML with CSS transform instead
       
       group.add(plane);
-      group.position.set(0, 0, 0);
+      group.position.set(0, 0, 0); // Centered at origin
       scene.add(group);
+      
+      console.log('Group position:', group.position);
+      console.log('Plane position:', plane.position);
+      console.log('Camera position:', camera.position);
       
       // CRITICAL: Register the HTML element with the mesh using ThreeHTMLRenderer
       htmlRenderer.addObject(htmlDiv, plane);
@@ -167,6 +176,14 @@ export default function ParticleFieldVanilla() {
       controls.dampingFactor = 0.05;
       controls.minDistance = 2;
       controls.maxDistance = 20;
+      
+      // Disable controls when interacting with HTML elements
+      htmlDiv.addEventListener('pointerenter', () => {
+        controls.enabled = false;
+      });
+      htmlDiv.addEventListener('pointerleave', () => {
+        controls.enabled = true;
+      });
 
       // Mouse move handler
       const handleMouseMove = (event: MouseEvent) => {
@@ -180,6 +197,11 @@ export default function ParticleFieldVanilla() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // Update HTML overlay renderer on resize
+        if (htmlRenderer && htmlRenderer.overlayRenderer) {
+          htmlRenderer.overlayRenderer.update();
+        }
       };
       window.addEventListener('resize', handleResize);
 
