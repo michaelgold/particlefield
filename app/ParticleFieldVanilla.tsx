@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export default function ParticleFieldVanilla() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,6 +19,7 @@ export default function ParticleFieldVanilla() {
     let htmlRenderer: any;
     let htmlDiv: HTMLDivElement;
     let group: THREE.Group;
+    let controls: OrbitControls;
 
     const mouse = { x: 0, y: 0 };
     const particleCount = 5000;
@@ -95,8 +97,6 @@ export default function ParticleFieldVanilla() {
         border-radius: 10px;
         color: white;
         font-family: system-ui;
-        position: absolute;
-        left: -9999px;
       `;
       htmlDiv.innerHTML = `
         <h2 style="margin: 0 0 10px 0; color: #4488ff;">HTML in Canvas! 🎉</h2>
@@ -122,8 +122,8 @@ export default function ParticleFieldVanilla() {
         ">
       `;
       
-      // Add to document body so it can be rendered
-      document.body.appendChild(htmlDiv);
+      // CRITICAL: Add HTML element INSIDE the canvas, not to body
+      renderer.domElement.appendChild(htmlDiv);
 
       // Add button click handler
       let clickCount = 0;
@@ -146,17 +146,27 @@ export default function ParticleFieldVanilla() {
       });
       const plane = new THREE.Mesh(planeGeometry, planeMaterial);
       
-      // Attach HTML element to the mesh
-      (plane as any).element = htmlDiv;
+      // Flip the plane 180 degrees on X-axis to correct upside-down rendering
+      plane.rotation.x = Math.PI;
       
       group.add(plane);
       group.position.set(0, 0, 0);
       scene.add(group);
       
+      // CRITICAL: Register the HTML element with the mesh using ThreeHTMLRenderer
+      htmlRenderer.addObject(htmlDiv, plane);
+      
       console.log('Plane mesh created:');
-      console.log('  - Has element property:', !!(plane as any).element);
-      console.log('  - Element:', (plane as any).element);
+      console.log('  - HTML element registered with renderer');
+      console.log('  - Element:', htmlDiv);
       console.log('  - Material type:', planeMaterial.type);
+
+      // Add OrbitControls
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 2;
+      controls.maxDistance = 20;
 
       // Mouse move handler
       const handleMouseMove = (event: MouseEvent) => {
@@ -201,10 +211,9 @@ export default function ParticleFieldVanilla() {
         }
 
         particles.geometry.attributes.position.needsUpdate = true;
-        particles.rotation.y += 0.001;
-
-        // Rotate HTML group
-        group.rotation.y += 0.005;
+        
+        // Update controls
+        controls.update();
 
         // Update HTML renderer - pass the scene so it can find meshes with .element
         if (htmlRenderer) {
@@ -229,6 +238,10 @@ export default function ParticleFieldVanilla() {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('resize', handleResize);
         cancelAnimationFrame(animationFrameId);
+        
+        if (controls) {
+          controls.dispose();
+        }
         
         if (htmlRenderer) {
           htmlRenderer.disconnect();
