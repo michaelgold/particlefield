@@ -91,45 +91,50 @@ export default function ParticleFieldVanilla() {
       particles = new THREE.Points(geometry, material);
       scene.add(particles);
 
-      // Create HTML element
+      // Create HTML element - match the examples (no box-sizing!)
       htmlDiv = document.createElement('div');
       htmlDiv.style.cssText = `
-        width: 300px;
-        height: 200px;
-        padding: 20px;
-        background: rgba(0, 0, 0, 0.8);
-        border: 2px solid #4488ff;
-        border-radius: 10px;
+        width: 400px;
+        height: 400px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.9);
         color: white;
         font-family: system-ui;
-        box-sizing: border-box;
+        overflow: visible;
       `;
       htmlDiv.innerHTML = `
-        <h2 style="margin: 0 0 10px 0; color: #4488ff;">HTML in Canvas! 🎉</h2>
-        <p style="margin: 0 0 10px 0;">This HTML is rendered directly on the canvas using the html-in-canvas polyfill.</p>
+        <h2 style="margin: 0 0 8px 0; color: #4488ff; font-size: 16px;">HTML in Canvas! 🎉</h2>
+        <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.3;">This HTML is rendered on canvas.</p>
         <button id="htmlButton" style="
           background: #4488ff;
           border: none;
           color: white;
-          padding: 10px 20px;
+          padding: 8px 16px;
           border-radius: 5px;
           cursor: pointer;
-          font-size: 14px;
+          font-size: 13px;
+          display: block;
+          width: 100%;
+          margin-bottom: 8px;
         ">Click Counter: 0</button>
         <input type="text" placeholder="Type something..." style="
           width: 100%;
-          margin-top: 10px;
           padding: 8px;
           border: 1px solid #4488ff;
           border-radius: 5px;
           background: rgba(255, 255, 255, 0.1);
           color: white;
+          font-size: 13px;
           box-sizing: border-box;
         ">
       `;
       
       // CRITICAL: Add HTML element INSIDE the canvas, not to body
       renderer.domElement.appendChild(htmlDiv);
+      
+      // Set explicit dimensions in JavaScript (like the official example does)
+      htmlDiv.style.width = '400px';
+      htmlDiv.style.height = '400px';
 
       // Add button click handler
       let clickCount = 0;
@@ -142,8 +147,15 @@ export default function ParticleFieldVanilla() {
       // Create group and add HTML plane
       group = new THREE.Group();
       
-      // Create plane geometry for HTML
-      const planeGeometry = new THREE.PlaneGeometry(3, 2);
+      // Create plane geometry - match the example ratio
+      // HTML element is 400x400, use a 2x2 plane like the example
+      const planeGeometry = new THREE.PlaneGeometry(2, 2);
+      
+      // Explicitly set bounding box to match plane size
+      planeGeometry.boundingBox = new THREE.Box3(
+        new THREE.Vector3(-1, -1, 0),
+        new THREE.Vector3(1, 1, 0)
+      );
       
       // Create a basic material - the polyfill will replace it with the HTML texture
       const planeMaterial = new THREE.MeshBasicMaterial({
@@ -151,8 +163,6 @@ export default function ParticleFieldVanilla() {
         side: THREE.DoubleSide,
       });
       const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-      
-      // Don't rotate the plane - flip the HTML with CSS transform instead
       
       group.add(plane);
       group.position.set(0, 0, 0); // Centered at origin
@@ -167,8 +177,15 @@ export default function ParticleFieldVanilla() {
       
       console.log('Plane mesh created:');
       console.log('  - HTML element registered with renderer');
-      console.log('  - Element:', htmlDiv);
+      console.log('  - Element dimensions:', htmlDiv.offsetWidth, 'x', htmlDiv.offsetHeight);
+      console.log('  - Plane geometry size:', planeGeometry.parameters.width, 'x', planeGeometry.parameters.height);
+      console.log('  - Canvas size:', renderer.domElement.width, 'x', renderer.domElement.height);
+      console.log('  - Canvas client size:', renderer.domElement.clientWidth, 'x', renderer.domElement.clientHeight);
+      console.log('  - Window size:', window.innerWidth, 'x', window.innerHeight);
+      console.log('  - Pixel ratio:', window.devicePixelRatio);
       console.log('  - Material type:', planeMaterial.type);
+
+
 
       // Add OrbitControls
       controls = new OrbitControls(camera, renderer.domElement);
