@@ -72,9 +72,19 @@ my-app/
 
 ### Interactive Particle Field
 - 5000 particles using `BufferGeometry`
-- Mouse interaction with smooth attraction effect
-- Volumetric fog for depth
+- **Color gradient system** - Cyan to magenta/purple gradient across particles
+- **Dynamic color pulsing** - Particles glow brighter on mouse interaction
+- **Spiral rotation motion** - Particles slowly rotate around the center
+- **Wave animations** - Combined Y and Z-axis wave motion for depth
+- Mouse interaction with force-based attraction
+- Volumetric fog for atmospheric depth
 - Smooth animations at 60fps
+
+### Advanced Visual Effects
+- **Bloom postprocessing** using pmndrs/postprocessing
+- Custom bloom settings: intensity 2.0, low luminance threshold
+- Enhanced fog density for atmospheric effect
+- Additive blending for glowing particles
 
 ### HTML-in-Canvas
 - Real HTML elements rendered on 3D surfaces
@@ -130,7 +140,7 @@ const animate = () => {
   controls.update();        // 1. Update controls
   // ... update particles   // 2. Update scene objects
   htmlRenderer.update();    // 3. Update HTML renderer
-  renderer.render(scene, camera); // 4. Render scene
+  composer.render();        // 4. Render with postprocessing
 };
 ```
 

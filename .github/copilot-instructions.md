@@ -1,7 +1,7 @@
 # Agent Rules for Particle Field Repository
 
 ## Project Overview
-This is a Next.js 16.2.1 application using React 19.2.4, Three.js 0.183.2, and the `three-html-render` polyfill for rendering HTML content onto 3D surfaces using vanilla Three.js (not React Three Fiber).
+This is a Next.js 16.2.1 application using React 19.2.4, Three.js 0.183.2, the `three-html-render` polyfill for rendering HTML content onto 3D surfaces using vanilla Three.js (not React Three Fiber), and pmndrs/postprocessing for bloom effects.
 
 ## Core Technologies & Constraints
 
@@ -54,6 +54,23 @@ This is a Next.js 16.2.1 application using React 19.2.4, Three.js 0.183.2, and t
   ```
 - Call `controls.update()` in animation loop BEFORE rendering
 - Set reasonable limits: `minDistance: 2`, `maxDistance: 20`
+
+### 6. Postprocessing Effects (pmndrs/postprocessing)
+- Import from: `postprocessing`
+- Use `EffectComposer` instead of direct `renderer.render()`
+- Setup pattern:
+  ```typescript
+  import { BloomEffect, EffectComposer, EffectPass, RenderPass } from 'postprocessing';
+  
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new EffectPass(camera, new BloomEffect({ intensity: 2.0 })));
+  
+  // In animation loop
+  composer.render();
+  ```
+- Update composer size on window resize: `composer.setSize(width, height)`
+- Dispose composer in cleanup: `composer.dispose()`
 
 ## File Structure Rules
 
@@ -120,8 +137,8 @@ const animate = () => {
   // 3. Update HTML renderer
   htmlRenderer.update();
   
-  // 4. Render scene
-  renderer.render(scene, camera);
+  // 4. Render scene with postprocessing
+  composer.render();
 };
 ```
 
@@ -145,11 +162,17 @@ const animate = () => {
 - React: 19.2.4  
 - Three.js: 0.183.2
 - three-html-render: 0.1.2
+- postprocessing: Latest (pmndrs/postprocessing)
 - Package manager: pnpm v10.28.0
 
 ## Additional Notes
-- The particle system uses 5000 particles with mouse interaction
+- The particle system uses 5000 particles with color gradients (cyan to magenta)
+- Particles have vertex colors with dynamic color pulsing on mouse interaction
+- Particle size: 0.015 (very small for subtle effect)
+- Particles use additive blending for glow effect
 - Camera starts at `z: 5` looking at origin
-- Scene has fog: `new THREE.Fog(0x000000, 1, 15)`
+- Scene has enhanced fog: `new THREE.Fog(0x000000, 1, 10)` (denser than default)
+- Bloom effect settings: intensity 2.0, luminanceThreshold 0.15, luminanceSmoothing 0.9
+- Particles have spiral rotation and wave animations
 - HTML element is 400x400px with 10px padding
 - Background color: `rgba(0, 0, 0, 0.9)` (semi-transparent black)
