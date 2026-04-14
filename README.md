@@ -5,11 +5,12 @@ A Next.js application featuring an interactive 3D particle field with HTML conte
 ## 🎯 Project Overview
 
 This project demonstrates:
-- **5000-particle interactive field** that responds to mouse movement
+- **5000-particle interactive field** with color gradients and dynamic animations
 - **HTML-in-Canvas rendering** - Real HTML elements (buttons, inputs, etc.) rendered on 3D planes
 - **Vanilla Three.js implementation** (not React Three Fiber)
+- **Advanced postprocessing** with bloom effects using pmndrs/postprocessing
 - **OrbitControls** for camera manipulation
-- **Volumetric fog** for depth perception
+- **Volumetric fog** for atmospheric depth
 - **Next.js 16** with Turbopack for fast development
 
 ## 🚀 Getting Started
@@ -63,6 +64,7 @@ my-app/
 | React | 19.2.4 | Component wrapper only |
 | Three.js | 0.183.2 | 3D graphics (vanilla, not R3F) |
 | three-html-render | 0.1.2 | HTML-in-canvas polyfill |
+| postprocessing | Latest | Bloom and visual effects |
 | TypeScript | Latest | Type safety |
 | Turbopack | Built-in | Fast development builds |
 
