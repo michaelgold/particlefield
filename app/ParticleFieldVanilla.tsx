@@ -82,12 +82,23 @@ export default function ParticleFieldVanilla() {
 
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
+      // Add colors for each particle (gradient from cyan to magenta)
+      const colors = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount * 3; i += 3) {
+        const t = Math.random();
+        colors[i] = 0.2 + t * 0.8;     // R: cyan to magenta
+        colors[i + 1] = 0.4 + t * 0.4; // G: moderate green
+        colors[i + 2] = 1.0;            // B: full blue
+      }
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
       const material = new THREE.PointsMaterial({
-        color: 0x4488ff,
-        size: 0.05,
+        size: 0.015,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.9,
         blending: THREE.AdditiveBlending,
+        vertexColors: true,
+        sizeAttenuation: true,
       });
 
       particles = new THREE.Points(geometry, material);
@@ -242,6 +253,7 @@ export default function ParticleFieldVanilla() {
 
         // Animate particles
         const positions = particles.geometry.attributes.position.array as Float32Array;
+        const colors = particles.geometry.attributes.color.array as Float32Array;
         const time = Date.now() * 0.001;
 
         for (let i = 0; i < particleCount * 3; i += 3) {
@@ -249,21 +261,45 @@ export default function ParticleFieldVanilla() {
           const y = positions[i + 1];
           const z = positions[i + 2];
 
-          // Wave motion
+          // Wave motion with rotation
           positions[i + 1] += Math.sin(time + x) * 0.01;
+          positions[i + 2] += Math.cos(time + y) * 0.01;
 
-          // Mouse interaction
+          // Spiral motion
+          const angle = time * 0.5;
+          const radius = Math.sqrt(x * x + z * z);
+          if (radius > 0.1) {
+            const newAngle = Math.atan2(z, x) + 0.001;
+            positions[i] = Math.cos(newAngle) * radius;
+            positions[i + 2] = Math.sin(newAngle) * radius;
+          }
+
+          // Mouse interaction with stronger effect
           const dx = mouse.x * 5 - x;
           const dy = mouse.y * 5 - y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance < 2) {
-            positions[i] += dx * 0.01;
-            positions[i + 1] += dy * 0.01;
+          if (distance < 2.5) {
+            const force = (2.5 - distance) / 2.5;
+            positions[i] += dx * 0.02 * force;
+            positions[i + 1] += dy * 0.02 * force;
+            
+            // Color pulse on interaction
+            colors[i] = Math.min(1.0, colors[i] + 0.1 * force);
+            colors[i + 1] = Math.min(1.0, colors[i + 1] + 0.1 * force);
+          } else {
+            // Fade back to original colors
+            const t = (i / 3) / particleCount;
+            colors[i] = colors[i] * 0.95 + (0.2 + t * 0.8) * 0.05;
+            colors[i + 1] = colors[i + 1] * 0.95 + (0.4 + t * 0.4) * 0.05;
           }
         }
 
         particles.geometry.attributes.position.needsUpdate = true;
+        particles.geometry.attributes.color.needsUpdate = true;
+        
+        // Rotate particle system slowly
+        particles.rotation.y += 0.0005;
         
         // Update controls
         controls.update();
