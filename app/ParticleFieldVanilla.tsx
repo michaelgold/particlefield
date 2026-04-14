@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { BloomEffect, EffectComposer, EffectPass, RenderPass } from 'postprocessing';
 
 export default function ParticleFieldVanilla() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,6 +21,7 @@ export default function ParticleFieldVanilla() {
     let htmlDiv: HTMLDivElement;
     let group: THREE.Group;
     let controls: OrbitControls;
+    let composer: EffectComposer;
 
     const mouse = { x: 0, y: 0 };
     const particleCount = 5000;
@@ -36,7 +38,7 @@ export default function ParticleFieldVanilla() {
 
       // Create scene
       scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0x000000, 1, 15);
+      scene.fog = new THREE.Fog(0x000000, 1, 10);
 
       // Create camera
       camera = new THREE.PerspectiveCamera(
@@ -194,6 +196,17 @@ export default function ParticleFieldVanilla() {
       controls.minDistance = 2;
       controls.maxDistance = 20;
       
+      // Setup postprocessing with enhanced bloom
+      composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      
+      const bloomEffect = new BloomEffect({
+        intensity: 2.0,
+        luminanceThreshold: 0.15,
+        luminanceSmoothing: 0.9,
+      });
+      composer.addPass(new EffectPass(camera, bloomEffect));
+      
       // Disable controls when interacting with HTML elements
       htmlDiv.addEventListener('pointerenter', () => {
         controls.enabled = false;
@@ -214,6 +227,7 @@ export default function ParticleFieldVanilla() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
         
         // Update HTML overlay renderer on resize
         if (htmlRenderer && htmlRenderer.overlayRenderer) {
@@ -266,8 +280,8 @@ export default function ParticleFieldVanilla() {
           }
         }
 
-        // Render scene
-        renderer.render(scene, camera);
+        // Render scene with postprocessing
+        composer.render();
       }
 
       animate();
@@ -280,6 +294,10 @@ export default function ParticleFieldVanilla() {
         
         if (controls) {
           controls.dispose();
+        }
+        
+        if (composer) {
+          composer.dispose();
         }
         
         if (htmlRenderer) {
